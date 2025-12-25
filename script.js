@@ -1,149 +1,132 @@
-document.querySelectorAll(".album").forEach(album => {
-  const tracks = album.querySelectorAll(".tracklist li");
-  const player = album.querySelector(".player");
-  const cover = album.querySelector(".album-cover");
+document.addEventListener('DOMContentLoaded', function() {
+  // ===== THEME SWITCHER =====
+  const toggleBtn = document.getElementById("themeToggle");
+  const body = document.body;
 
-  let currentIndex = -1;
-
-  function playTrack(index) {
-    if (index < 0 || index >= tracks.length) return;
-
-    // Сброс активных треков и анимаций
-    tracks.forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".album-cover").forEach(c => c.classList.remove("playing"));
-
-    // Установка активного трека
-    tracks[index].classList.add("active");
-    player.src = tracks[index].dataset.src;
-    player.play();
-    cover.classList.add("playing");
-    currentIndex = index;
-  }
-
-  tracks.forEach((track, index) => {
-    track.addEventListener("click", () => {
-      playTrack(index);
-    });
-  });
-
-  // Когда трек ставится на паузу
-  player.onpause = () => cover.classList.remove("playing");
-
-  // Автовоспроизведение следующего трека
-  player.onended = () => {
-    let nextIndex = currentIndex + 1;
-    if (nextIndex >= tracks.length) nextIndex = 0; // зацикливаем
-    playTrack(nextIndex);
-  };
-});
-
-// ===== THEME SWITCHER =====
-const toggleBtn = document.getElementById("themeToggle");
-const body = document.body;
-
-// Применяем сохранённую тему при загрузке
-if (localStorage.getItem("theme") === "light") {
-  body.classList.add("light");
-  toggleBtn.textContent = "☀️";
-} else {
-  toggleBtn.textContent = "🌙";
-}
-
-// Переключение темы по кнопке
-toggleBtn.addEventListener("click", () => {
-  body.classList.toggle("light");
-  if (body.classList.contains("light")) {
-    localStorage.setItem("theme", "light");
-    toggleBtn.textContent = "☀️";
-  } else {
-    localStorage.setItem("theme", "dark");
-    toggleBtn.textContent = "🌙";
-  }
-});
-
-// Синхронизация темы между вкладками
-window.addEventListener("storage", () => {
+  // Применяем сохранённую тему при загрузке
   if (localStorage.getItem("theme") === "light") {
     body.classList.add("light");
     toggleBtn.textContent = "☀️";
   } else {
-    body.classList.remove("light");
     toggleBtn.textContent = "🌙";
   }
-});
 
-
-// READ MORE
-const readMoreBtn = document.getElementById("readMoreBtn");
-const bioFull = document.getElementById("bioFull");
-
-readMoreBtn.addEventListener("click", () => {
-  bioFull.classList.toggle("open");
-
-  readMoreBtn.textContent = bioFull.classList.contains("open")
-    ? "Скрыть"
-    : "Читать полностью";
-});
-
-// SCROLL ANIMATION
-const sections = document.querySelectorAll(".fade-section");
-
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add("visible");
+  // Переключение темы по кнопке
+  toggleBtn.addEventListener("click", () => {
+    body.classList.toggle("light");
+    if (body.classList.contains("light")) {
+      localStorage.setItem("theme", "light");
+      toggleBtn.textContent = "☀️";
+    } else {
+      localStorage.setItem("theme", "dark");
+      toggleBtn.textContent = "🌙";
     }
   });
-}, { threshold: 0.2 });
 
-sections.forEach(section => observer.observe(section));
-
-
-// ===== FULLSCREEN GALLERY =====
-const galleryImages = document.querySelectorAll(".gallery img");
-const lightbox = document.getElementById("lightbox");
-const lightboxImg = document.getElementById("lightboxImg");
-const closeBtn = document.querySelector(".lightbox-close");
-const prevBtn = document.getElementById("prevImg");
-const nextBtn = document.getElementById("nextImg");
-
-let currentImageIndex = 0;
-
-galleryImages.forEach((img, index) => {
-  img.addEventListener("click", () => {
-    currentImageIndex = index;
-    openLightbox(img.src);
+  // Синхронизация темы между вкладками
+  window.addEventListener("storage", () => {
+    if (localStorage.getItem("theme") === "light") {
+      body.classList.add("light");
+      toggleBtn.textContent = "☀️";
+    } else {
+      body.classList.remove("light");
+      toggleBtn.textContent = "🌙";
+    }
   });
-});
 
-function openLightbox(src) {
-  lightboxImg.src = src;
-  lightbox.classList.add("active");
-}
+  // ===== READ MORE =====
+  const readMoreBtn = document.getElementById("readMoreBtn");
+  const bioFull = document.getElementById("bioFull");
 
-function closeLightbox() {
-  lightbox.classList.remove("active");
-}
+  if (readMoreBtn && bioFull) {
+    readMoreBtn.addEventListener("click", () => {
+      bioFull.classList.toggle("open");
 
-closeBtn.addEventListener("click", closeLightbox);
+      readMoreBtn.textContent = bioFull.classList.contains("open")
+        ? "Скрыть"
+        : "Читать полностью";
+    });
+  }
 
-lightbox.addEventListener("click", e => {
-  if (e.target === lightbox) closeLightbox();
-});
+  // ===== SPOTIFY LINKS =====
+  document.querySelectorAll(".tracklist li").forEach(track => {
+    track.addEventListener("click", () => {
+      const spotifyUrl = track.getAttribute("data-spotify");
+      if (spotifyUrl) {
+        window.open(spotifyUrl, "_blank");
+      }
+    });
+  });
 
-prevBtn.addEventListener("click", () => {
-  currentImageIndex =
-    (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
-  lightboxImg.src = galleryImages[currentImageIndex].src;
-});
+  // ===== SCROLL ANIMATION =====
+  const sections = document.querySelectorAll(".fade-section");
 
-nextBtn.addEventListener("click", () => {
-  currentImageIndex =
-    (currentImageIndex + 1) % galleryImages.length;
-  lightboxImg.src = galleryImages[currentImageIndex].src;
-});
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
+    });
+  }, { threshold: 0.2 });
 
-// ESC закрытие
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") closeLightbox();
+  sections.forEach(section => observer.observe(section));
+
+  // ===== FULLSCREEN GALLERY =====
+  const galleryImages = document.querySelectorAll(".gallery img");
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = document.getElementById("lightboxImg");
+  const closeBtn = document.querySelector(".lightbox-close");
+  const prevBtn = document.getElementById("prevImg");
+  const nextBtn = document.getElementById("nextImg");
+
+  let currentImageIndex = 0;
+
+  galleryImages.forEach((img, index) => {
+    img.addEventListener("click", () => {
+      currentImageIndex = index;
+      openLightbox(img.src);
+    });
+  });
+
+  function openLightbox(src) {
+    lightboxImg.src = src;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeLightbox);
+  }
+
+  if (lightbox) {
+    lightbox.addEventListener("click", e => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      currentImageIndex =
+        (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentImageIndex].src;
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      currentImageIndex =
+        (currentImageIndex + 1) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentImageIndex].src;
+    });
+  }
+
+  // ESC закрытие
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeLightbox();
+  });
 });
